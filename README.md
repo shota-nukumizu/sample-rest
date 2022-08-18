@@ -254,3 +254,76 @@ CREATE TABLE "User" (
 CREATE UNIQUE INDEX "User_name_key" ON "User"("name");
 ```
 
+## データベースの作成
+
+`prisma`ディレクトリに新規で`seed.ts`ファイルを作成する
+
+```ts
+import { PrismaClient } from '@prisma/client';
+
+const prisma = new PrismaClient();
+
+async function main() {
+    const post1 = await prisma.user.upsert({
+        where: {name: 'Shota Nukumizu'}, // データベースを設置する場所
+        update: {}, // データ更新をする必要がないのでとりあえず保留
+        // データの中身を設計する
+        create: {
+            name: 'Shota Nukumizu',
+            description: 'A programmer'
+        },
+    })
+
+    const post2 = await prisma.user.upsert({
+        where: {name: 'Furukawa Shuntaro'},
+        update: {},
+        create: {
+            name: 'Furukawa Shuntaro',
+            description: 'The President of Nintendo'
+        }
+    })
+
+    console.log({post1, post2})
+}
+
+main()
+    .catch((error) => {
+        console.log(error)
+        process.exit(1)
+    })
+    .finally(async () => {
+        await prisma.$disconnect()
+    })
+```
+
+`package.json`にprismaコマンドを入力する
+
+```json
+// package.json
+
+// ...
+  "scripts": {
+    // ...
+  },
+  "dependencies": {
+    // ...
+  },
+  "devDependencies": {
+    // ...
+  },
+  "jest": {
+    // ...
+  },
+  "prisma": {
+    "seed": "ts-node prisma/seed.ts"
+  }
+```
+
+`seed`コマンドは、以前に定義した`prisma/seed.ts`ファイルを実行する。`ts-node`はすでに`package.json`でdev依存としてインストールされているため、このコマンドは自動的に動作する。
+
+以下のコマンドで`seed`を実行する。
+
+```
+npx prisma db seed
+```
+

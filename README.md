@@ -155,3 +155,21 @@ bootstrap()
 PrismaはNode.jsとTypeScript専用のオープンソースのORMである。ORM(Object-Relational Mapping)はデータベースに対するデータの操作をオブジェクト指向型言語のやり方で扱えるようにするための手法である。
 
 ORMを使うことで、データベースを設計する際にSQL言語を書く必要はなくなる。
+
+最初に以下のコマンドを入力してPrismaをインストールする。
+
+```
+npm install prisma --save-dev
+```
+
+以下はPrisma CLIを使う。ここで、Prisma CLIの`init`コマンドでPrismaの初期設定を行う。
+
+```
+npx prisma init
+```
+
+こちらのコマンドは、以下のファイルで新しい`prisma`ディレクトリを作成する。
+
+* `schema.prisma`：データベース接続を指定し、データベーススキーマを格納する
+* `.env`：データベースの認証情報を環境変数のグループに格納する際に使う
+

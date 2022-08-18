@@ -503,3 +503,31 @@ findAll() {
 
 このようにプログラムを書き換えて、`http://localhost:3000/api/`にアクセスしてドロップダウンメニューの`GET`をクリックして実行する。
 
+## `GET /users/:id`エンドポイントの実装
+
+コントローラでは、`findOne`でデータベース内にあるデータの詳細を獲得できる。
+
+`src/users/users.controller.ts`
+
+```ts
+@Get(':id')
+findOne(@Param('id') id: string) {
+  return this.usersService.findOne(+id);
+}
+```
+
+こちらのルーティングは動的な`id`パラメータを受け取って、`findOne`コントローラルートハンドラに渡される。`Article`モデルには整数の`id`フィールドがあるので、`id`パラメータは`+`演算子を使って数値にキャストしなければならない。
+
+ここで、`UsersService`の`findOne`メソッドを更新して、指定された`id`を持つデータを返すようにする。
+
+`src/users/users.service.ts`
+
+```ts
+findOne(id: number) {
+  // return `This action returns a #${id} user`;
+  return this.prisma.user.findUnique({ where: { id } });
+}
+```
+
+`http://localhost:3000/api/`にアクセスしてドロップダウンメニューの`GET /users/{id}`をクリックする。
+

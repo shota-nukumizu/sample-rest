@@ -368,3 +368,59 @@ import { PrismaService } from './prisma.service';
 })
 export class PrismaModule {}
 ```
+
+# Swaggerのセットアップ
+
+SwaggerはOpenAPIの仕様を使ってAPIをドキュメント化するためのツールである。NestJSには、Swaggerのための専用モジュールがある。
+
+まずは必要な依存関係・ライブラリをインストールしよう。
+
+```powershell
+npm install --save @nestjs/swagger swagger-ui-express
+```
+
+`src/main.ts`
+
+```ts
+import { NestFactory } from '@nestjs/core';
+import { AppModule } from './app.module';
+import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
+
+async function bootstrap() {
+  const app = await NestFactory.create(AppModule);
+
+  const config = new DocumentBuilder()
+    .setTitle('Sample REST API')
+    .setDescription('REST API Tutorial in NestJS')
+    .setVersion('0.1')
+    .build()
+  
+  const document = SwaggerModule.createDocument(app, config)
+  SwaggerModule.setup('api', app, document)
+  
+  await app.listen(3000);
+}
+bootstrap();
+```
+
+ここで開発者サーバを立ち上げて、`http:localhost:3000/api/`にアクセスする。そうすれば、Swaggerの画面が表示されるだろう。
+
+なお、Swaggerを導入する理由は**REST APIの挙動を目視で確認できるようにする**ため。
+
+# CRUD操作の実装
+
+ここから実際にREST APIを設計していく。NestJSでは、以下のコマンドで簡単にCRUD設計のプロトタイプを生成できる。
+
+```
+npx nest g resource
+```
+
+以下のように質問に回答する。
+
+1. `What name would you like to use for this resource (plural, e.g., "users")?`: **users**
+2. `What transport layer do you use?`: **REST API**
+3. `Would you like to generate CRUD entry points?`: **Yes**
+
+これで、新しい`src/users`ディレクトリにRESTエンドポイント用の定型文がすべて揃った。
+
+`src/users/users.controller.ts`ファイル内には、異なるルート(ルートハンドラ)の定義がある。各リクエストを処理するビジネスロジックは、`src/users/users.service.ts`ファイルにカプセル化される。

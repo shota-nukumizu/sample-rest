@@ -327,3 +327,44 @@ main()
 npx prisma db seed
 ```
 
+# Prismaサービスの作成
+
+以下のコマンドで、NestJSアプリ開発に必要な`Module`と`Service`をインストールしておく
+
+```
+npx nest g module prisma
+npx nest g service prisma
+```
+
+これによって、新しいサブディレクトリ`./src/prisma`が生成され、`prisma.module.ts`と`prisma.service.ts`ファイルが生成される。
+
+`src/prisma/prisma.service.ts`
+
+```ts
+import { INestApplication, Injectable } from '@nestjs/common';
+import { PrismaClient } from '@prisma/client';
+
+@Injectable()
+export class PrismaService extends PrismaClient {
+  async enableShutdownHooks(app: INestApplication) {
+    this.$on('beforeExit', async () => {
+      await app.close();
+    });
+  }
+}
+```
+
+`src/prisma/prisma.module.ts`
+
+`PrismaService`をインポートしてNestJSアプリケーションにPrisma操作を認識させる。
+
+```ts
+import { Module } from '@nestjs/common';
+import { PrismaService } from './prisma.service';
+
+@Module({
+  providers: [PrismaService],
+  exports: [PrismaService],
+})
+export class PrismaModule {}
+```

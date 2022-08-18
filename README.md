@@ -531,3 +531,45 @@ findOne(id: number) {
 
 `http://localhost:3000/api/`にアクセスしてドロップダウンメニューの`GET /users/{id}`をクリックする。
 
+## `POST /users`エンドポイントの実装
+
+NestJSでは、データベースにデータを新規で追加する場合は`create`関数を使う。
+
+`src/users/users.controller.ts`
+
+```ts
+@Post()
+create(@Body() createArticleDto: CreateArticleDto) {
+  return this.articlesService.create(createArticleDto);
+}
+```
+
+リクエストボディのなかで`CreateArticleDto`タイプの引数を期待することに注目すること。DTO(Data Transfer Object)はデータがネットワーク上でどのように送信されるかを定義するオブジェクトだ。現在、`CreateArticleDto`は空のクラスである。これにプロパティを追加してリクエストボディの形状を定義することになる。
+
+`src/users/dto/create-user.dto.ts`
+
+```ts
+import { ApiProperty } from "@nestjs/swagger";
+
+
+export class CreateUserDto {
+  @ApiProperty()
+  name: string
+
+  @ApiProperty({ required: false })
+  description?: string
+}
+```
+
+クラスのプロパティを`SwaggerModule`から見えるようにするには、`@ApiProperty()`デコレータが必要だ。
+
+`CreateArticleDto`は、Swagger APIページのSchemasに定義されている。`UpdateArticleDto`は`CreateArticleDto`の定義から自動的に推論される。つまり、`UpdateArticleDto`もSwagger内部で定義されていることになる。
+
+`src/users/users.service.ts`
+
+```ts
+create(createUserDto: CreateUserDto) {
+  // return 'This action adds a new user';
+  return this.prisma.user.create({ data: createUserDto });
+}
+```

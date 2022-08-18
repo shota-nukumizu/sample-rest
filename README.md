@@ -615,3 +615,106 @@ update(id: number, updateUserDto: UpdateUserDto) {
 
 データベース内にそのような`User`レコードが見つからない場合、Prismaはエラーを返す。このような場合、APIはユーザーフレンドリーなエラーメッセージを返さない。
 
+## `DELETE /users/:id`エンドポイントの実装
+
+このエンドポイントは、既存のデータを削除するためのものである。このエンドポイントのためのルートハンドラは`remove`と呼ばれる。以下のような感じだ。
+
+`src/users/users.controller.ts`
+
+```ts
+@Delete(':id')
+remove(@Param('id') id: string) {
+  return this.usersService.remove(+id);
+}
+```
+
+先程と同様に、`UsersService`に移動して対応するメソッドを更新する。
+
+```ts
+remove(id: number) {
+  // return `This action removes a #${id} user`;
+  return this.prisma.user.delete({ where: { id } })
+}
+```
+
+これで`DELETE`エンドポイントの実装は終了する。
+
+# レスポンス型の設定
+
+Swaggerの各エンドポイントの下にあるResponsesタブを見ると、Descriptionが空になっていることがわかる。これは、Swaggerがどのエンドポイントのレスポンスタイプも知らないからだ。いくつかのデコレーターを使ってこれを修正することになる。
+
+まず、返されたエンティティオブジェクトの形状を識別するために、Swaggerが使用できるエンティティを定義する必要がある。これを行うには、`articles.entity.ts`ファイル内の`ArticleEntity`クラスを次のように更新しよう。
+
+`src/users/entities/user.entity.ts`
+
+```ts
+import { ApiProperty } from "@nestjs/swagger";
+import { User } from "@prisma/client";
+
+export class UserEntity implements User {
+    @ApiProperty()
+    id: number
+
+    @ApiProperty()
+    name: string
+
+    @ApiProperty({ required: false, nullable: true })
+    description: string | null
+}
+```
+
+Prisma Clientが生成する`User`型を実装し、各プロパティに`@ApiProperty()`デコレータを追加したもの。
+
+コントローラのルートハンドラに正しいレスポンスタイプをアノテートする。NestJSには、これを実装するのにデコレータがある。
+
+`src/users/users.controller.ts`
+
+```ts
+import { CreateUserDto } from './dto/create-user.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
+
+import { ApiCreatedResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import { UserEntity } from './entities/user.entity';
+
+@Controller('users')
+@ApiTags('users')
+export class UsersController {
+  constructor(private readonly usersService: UsersService) {}
+
+  @Post()
+  @ApiCreatedResponse({ type: UserEntity })
+  create(@Body() createUserDto: CreateUserDto) {
+    return this.usersService.create(createUserDto);
+  }
+
+  @Get()
+  @ApiOkResponse({ type: UserEntity, isArray: true })
+  findAll() {
+    return this.usersService.findAll();
+  }
+
+  @Get(':id')
+  @ApiOkResponse({ type: UserEntity })
+  findOne(@Param('id') id: string) {
+    return this.usersService.findOne(+id);
+  }
+
+  @Patch(':id')
+  @ApiOkResponse({ type: UserEntity })
+  update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
+    return this.usersService.update(+id, updateUserDto);
+  }
+
+  @Delete(':id')
+  @ApiOkResponse({ type: UserEntity })
+  remove(@Param('id') id: string) {
+    return this.usersService.remove(+id);
+  }
+}
+```
+
+`GET`、`PATCH`、`DELETE`エンドポイントには`@ApiOkResponse`を、POSTエンドポイントには`@ApiCreatedResponse`を追加している。`type`プロパティは、戻り値の型を指定するために使用されます。
+
+# 参照
+
+[Building a REST API with NestJS and Prisma - prisma.io](https://www.prisma.io/blog/nestjs-prisma-rest-api-7D056s1BmOL0)

@@ -403,7 +403,7 @@ async function bootstrap() {
 bootstrap();
 ```
 
-ここで開発者サーバを立ち上げて、`http:localhost:3000/api/`にアクセスする。そうすれば、Swaggerの画面が表示されるだろう。
+ここで開発者サーバを立ち上げて、`http://localhost:3000/api/`にアクセスする。そうすれば、Swaggerの画面が表示されるだろう。
 
 なお、Swaggerを導入する理由は**REST APIの挙動を目視で確認できるようにする**ため。
 
@@ -424,3 +424,82 @@ npx nest g resource
 これで、新しい`src/users`ディレクトリにRESTエンドポイント用の定型文がすべて揃った。
 
 `src/users/users.controller.ts`ファイル内には、異なるルート(ルートハンドラ)の定義がある。各リクエストを処理するビジネスロジックは、`src/users/users.service.ts`ファイルにカプセル化される。
+
+## `PrismaClient`を`Articles`Moduleに付け加える
+
+`PrismaClient`を`Articles`Moduleに付け加えるために、`PrismaModule`をインポートしなければならない。以下のように`imports`のリストに`UsersModule`を追加しておこう。
+
+`src/users/users.module.ts`
+
+```ts
+import { Module } from '@nestjs/common';
+import { UsersService } from './users.service';
+import { UsersController } from './users.controller';
+import { PrismaModule } from 'src/prisma/prisma.module';
+
+@Module({
+  controllers: [UsersController],
+  providers: [UsersService],
+  imports: [PrismaModule]
+})
+export class UsersModule {}
+```
+
+これで、`UsersService`の中に`PrismaService`を注入し、それを使ってデータベースにアクセスできるようになりました。これを行うには、`users.service.ts`に以下のようなコンストラクタを追加します。
+
+`src/articles/articles.service.ts`
+
+```ts
+import { Injectable } from '@nestjs/common';
+import { CreateUserDto } from './dto/create-user.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
+import { PrismaService } from 'src/prisma/prisma.service'; // 追加
+
+@Injectable()
+export class UsersService {
+  constructor(private prisma: PrismaService) {} // 追加
+
+  create(createUserDto: CreateUserDto) {
+    return 'This action adds a new user';
+  }
+
+  findAll() {
+    return `This action returns all users`;
+  }
+
+  findOne(id: number) {
+    return `This action returns a #${id} user`;
+  }
+  update(id: number, updateUserDto: UpdateUserDto) {
+    return `This action updates a #${id} user`;
+  }
+  remove(id: number) {
+    return `This action removes a #${id} user`;
+  }
+}
+```
+
+## `GET`エンドポイントの実装
+
+NestJSにおける`GET`エンドポイントは以下のように表現される。(コントローラの場合)
+
+```ts
+// src/users/users.controller.ts
+
+@Get()
+findAll() {
+  return this.usersService.findAll();
+}
+```
+
+データベース内のすべての名前リストの配列を返すように、`UsersService.findAll()`を更新しなければならない。
+
+```ts
+findAll() {
+  // return `This action returns all users`;
+  return this.prisma.user.findMany()
+}
+```
+
+このようにプログラムを書き換えて、`http://localhost:3000/api/`にアクセスしてドロップダウンメニューの`GET`をクリックして実行する。
+

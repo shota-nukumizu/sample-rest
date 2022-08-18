@@ -173,3 +173,84 @@ npx prisma init
 * `schema.prisma`：データベース接続を指定し、データベーススキーマを格納する
 * `.env`：データベースの認証情報を環境変数のグループに格納する際に使う
 
+# データベースの設計
+
+データベースへの接続は`schema.prisma`ファイルの`datasource`ブロックで設定される。デフォルトでは`postgresql`に設定されているが、本チュートリアルではSQLiteを使うので、`datasource`ブロックのプロバイダフィールドを`sqlite`に調整しなければならない。
+
+```prisma
+datasource db {
+  provider = "sqlite" // ここを"postgresql" => "sqlite"にする
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+```
+
+ここで、`.env`を開いて`DATABASE_URL`環境変数を以下のように調整する。
+
+```
+DATABASE_URL="file:./dev.db"
+```
+
+SQLiteは単純なファイルであり、SQLiteを使用するためにサーバーは必要ない。したがって、ホストとポートを含む接続URLを設定する代わりに、ローカルファイル（この場合`dev.db`と呼ばれる）を指定するだけでいい。
+
+## モデルを設計する
+
+実際に、`schema.prisma`ファイルにデータベースの情報を書いていく。
+
+```prisma
+datasource db {
+  provider = "sqlite" // ここを"postgresql" => "sqlite"にする
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// 以下のプログラムを追加する
+model User {
+  id Int @id @default(autoincrement()) // idを設定して、自動で生成する
+  name String @unique // nameが他のnameと一致している場合はnull
+  description String? //後ろに?をつけることで、nullableを示す。(要はなくてもいい)
+}
+```
+
+## データベースのマイグレーション(接続)
+
+`schema.prisma`ファイルを作成した後は、以下のコマンドを入力する。
+
+```
+npx prisma migrate dev --name "init"
+```
+
+成功した場合、このようにターミナルにメッセージが表示される
+
+```
+The following migration(s) have been created and applied from new schema changes:
+
+migrations/
+  └─ 20220528101323_init/
+    └─ migration.sql
+
+Your database is now in sync with your schema.
+...
+✔ Generated Prisma Client (3.14.0 | library) to ./node_modules/@prisma/client in 31ms
+```
+
+以下のファイルはコマンドで生成されたSQLファイルになる。
+
+```sql
+-- CreateTable
+CREATE TABLE "User" (
+    "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    "name" TEXT NOT NULL,
+    "description" TEXT
+);
+
+-- CreateIndex
+CREATE UNIQUE INDEX "User_name_key" ON "User"("name");
+```
+

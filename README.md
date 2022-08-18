@@ -573,3 +573,45 @@ create(createUserDto: CreateUserDto) {
   return this.prisma.user.create({ data: createUserDto });
 }
 ```
+
+## `PATCH /users/:id`の実装
+
+こちらのエンドポイントは、既存の記事を更新するためのものである。このエンドポイントのためのルートハンドラは`update`と呼ばれる。
+
+`src/users/users.controller.ts`
+
+```ts
+@Patch(':id')
+update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
+  return this.usersService.update(+id, updateUserDto);
+}
+```
+
+`updateUserDto`の定義は`CreateUserDto`の`PartialType`として定義されている。従って、これは`CreateUserDto`のすべてのプロパティを持つことができる。
+
+`src/users/dto/update-user.dto.ts`
+
+```ts
+import { PartialType } from '@nestjs/swagger';
+import { CreateUserDto } from './create-user.dto';
+
+export class UpdateArticleDto extends PartialType(CreateUserDto) {}
+```
+前述と同様に、この操作に対応するサービスメソッドを更新しなければならない。
+
+`src/users/users.service.ts`
+
+```ts
+update(id: number, updateUserDto: UpdateUserDto) {
+  // return `This action updates a #${id} user`;
+  return this.prisma.user.update({
+    where: { id },
+    data: updateUserDto,
+  })
+}
+```
+
+`user.update`操作は、与えられた`id`を持つ`User`レコードを見つけ、`updateUserDto`のデータでそれを更新しようとするもの。
+
+データベース内にそのような`User`レコードが見つからない場合、Prismaはエラーを返す。このような場合、APIはユーザーフレンドリーなエラーメッセージを返さない。
+

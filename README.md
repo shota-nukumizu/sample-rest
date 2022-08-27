@@ -6,10 +6,11 @@
 
 * Visual Studio Code 1.70
 * Windows 11
-* TypeScript 4.7
-* NestJS
-* Prisma
-* Swagger
+* TypeScript 4.8
+* NestJS 9.1.1
+* Prisma 4.2.1
+* Swagger 3.0.3
+* SQLite 3.39.2
 
 # 大まかな手順
 
